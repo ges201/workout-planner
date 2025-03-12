@@ -25,6 +25,8 @@ class Exercise {
     required this.secondaryMuscles,
   });
 
+  get id => null;
+
   Exercise copy({
     String? name,
     ExerciseCategory? category,

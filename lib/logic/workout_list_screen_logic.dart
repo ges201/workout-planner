@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:workout_planner/logic/workout_creation_screen_logic.dart';
 import 'package:provider/provider.dart';
 import '../data/workout_repository.dart';
@@ -15,25 +17,14 @@ class WorkoutListLogic {
     return await repository.getAllWorkouts();
   }
 
-  /// Handles workout deletion with error feedback
-  Future<void> deleteWorkout(BuildContext context, WorkoutDay workout) async {
-    final scaffold = ScaffoldMessenger.of(context);
-    try {
-      await repository.deleteWorkout(workout);
-      scaffold.showSnackBar(
-        SnackBar(
-          content: Text('Deleted ${workout.name}'),
-          backgroundColor: Colors.red.shade800,
-        ),
-      );
-    } catch (e) {
-      scaffold.showSnackBar(
-        SnackBar(
-          content: Text('Failed to delete: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+  /// Provides a listenable for workouts
+  ValueListenable<Box<WorkoutDay>> getWorkoutsListenable() {
+    return repository.getWorkoutsListenable();
+  }
+
+  /// Handles workout deletion
+  Future<void> deleteWorkout(WorkoutDay workout) async {
+    await repository.deleteWorkout(workout);
   }
 
   /// Navigates to the workout creation screen for editing

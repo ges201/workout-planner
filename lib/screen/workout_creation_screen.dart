@@ -77,22 +77,28 @@ class _WorkoutCreationScreenState extends State<WorkoutCreationScreen> {
         ),
         ElevatedButton(
           onPressed:
-              (logic.workoutName.isNotEmpty &&
-                      logic.selectedExercises.isNotEmpty)
-                  ? () async {
-                    try {
-                      await logic.saveWorkout(context);
-                      if (context.mounted) Navigator.of(context).pop(true);
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Failed to save workout: $e')),
-                        );
-                        Navigator.of(context).pop(false);
-                      }
-                    }
-                  }
-                  : null,
+          (logic.workoutName.isNotEmpty &&
+              logic.selectedExercises.isNotEmpty)
+              ? () async {
+            try {
+              await logic.saveWorkout(context);
+              if (context.mounted) Navigator.of(context).pop(true);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Workout saved'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed to save workout: $e')),
+                );
+                Navigator.of(context).pop(false);
+              }
+            }
+          }
+              : null,
           child: const Text('Save'),
         ),
       ],
@@ -106,33 +112,33 @@ class _WorkoutCreationScreenState extends State<WorkoutCreationScreen> {
       child: Consumer<WorkoutScreenLogic>(
         builder:
             (context, logic, _) => Scaffold(
-              appBar: AppBar(
-                title: Text('Add to ${widget.workoutName}'),
-                elevation: 0,
-                backgroundColor: Colors.transparent,
-                foregroundColor: Theme.of(context).colorScheme.onSurface,
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () async {
-                    if (await _onWillPop()) Navigator.of(context).pop();
-                  },
-                ),
-              ),
-              body: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      _buildWorkoutHeader(context),
-                      const SizedBox(height: 8),
-                      Expanded(child: _buildExerciseList()),
-                    ],
-                  ),
-                ),
+          appBar: AppBar(
+            title: Text('Add to ${widget.workoutName}'),
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () async {
+                if (await _onWillPop()) Navigator.of(context).pop();
+              },
+            ),
+          ),
+          body: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  _buildWorkoutHeader(context),
+                  const SizedBox(height: 8),
+                  Expanded(child: _buildExerciseList()),
+                ],
               ),
             ),
+          ),
+        ),
       ),
     );
   }
@@ -143,9 +149,9 @@ class _WorkoutCreationScreenState extends State<WorkoutCreationScreen> {
       itemCount: hasExercises ? logic.selectedExercises.length + 1 : 1,
       separatorBuilder:
           (context, index) =>
-              hasExercises && index < logic.selectedExercises.length - 1
-                  ? const SizedBox(height: 12)
-                  : const SizedBox.shrink(),
+      hasExercises && index < logic.selectedExercises.length - 1
+          ? const SizedBox(height: 12)
+          : const SizedBox.shrink(),
       itemBuilder: (context, index) {
         if (!hasExercises) return _buildEmptyStateWithButton();
         if (index == logic.selectedExercises.length) {
@@ -256,9 +262,9 @@ class _WorkoutCreationScreenState extends State<WorkoutCreationScreen> {
                       ),
                       suffixIcon: const Icon(Icons.edit, size: 16),
                       errorText:
-                          logic.workoutName.isEmpty
-                              ? 'Workout name is required'
-                              : null,
+                      logic.workoutName.isEmpty
+                          ? 'Workout name is required'
+                          : null,
                     ),
                     style: const TextStyle(
                       fontSize: 18,
@@ -272,10 +278,32 @@ class _WorkoutCreationScreenState extends State<WorkoutCreationScreen> {
                 IconButton(
                   icon: const Icon(Icons.save),
                   onPressed:
-                      (logic.selectedExercises.isNotEmpty &&
-                              logic.workoutName.isNotEmpty)
-                          ? () => logic.saveWorkout(context)
-                          : null,
+                  (logic.selectedExercises.isNotEmpty &&
+                      logic.workoutName.isNotEmpty)
+                      ? () async {
+                    try {
+                      await logic.saveWorkout(context);
+                      if (context.mounted) {
+                        // Add this SnackBar:
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Workout saved'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Failed to save: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  }
+                      : null,
                   tooltip: 'Save Workout',
                 ),
               ],
@@ -362,7 +390,7 @@ class _WorkoutCreationScreenState extends State<WorkoutCreationScreen> {
   List<Widget> _buildSetRows(WorkoutExercise exercise, int exerciseIndex) {
     return List.generate(
       exercise.sets.length,
-      (setIndex) => _buildSetRow(
+          (setIndex) => _buildSetRow(
         exerciseIndex: exerciseIndex,
         setIndex: setIndex,
         set: exercise.sets[setIndex],
@@ -469,34 +497,34 @@ class _WorkoutCreationScreenState extends State<WorkoutCreationScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text(
-              'Weight for ${logic.selectedExercises[exerciseIndex].exercise.name}',
-            ),
-            content: TextField(
-              controller: controller,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              decoration: const InputDecoration(
-                labelText: 'Weight (kg)',
-                suffix: Text('kg'),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  final weight = double.tryParse(controller.text) ?? 0;
-                  logic.updateSetWeight(exerciseIndex, setIndex, weight);
-                  Navigator.pop(context);
-                },
-                child: const Text('Done'),
-              ),
-            ],
+        title: Text(
+          'Weight for ${logic.selectedExercises[exerciseIndex].exercise.name}',
+        ),
+        content: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(
+            decimal: true,
           ),
+          decoration: const InputDecoration(
+            labelText: 'Weight (kg)',
+            suffix: Text('kg'),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final weight = double.tryParse(controller.text) ?? 0;
+              logic.updateSetWeight(exerciseIndex, setIndex, weight);
+              Navigator.pop(context);
+            },
+            child: const Text('Done'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -516,74 +544,74 @@ class _WorkoutCreationScreenState extends State<WorkoutCreationScreen> {
       context: context,
       builder:
           (context) => StatefulBuilder(
-            builder:
-                (context, setStateDialog) => AlertDialog(
-                  title: Text(
-                    'Rest Time for ${logic.selectedExercises[exerciseIndex].exercise.name}',
-                  ),
-                  content: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SwitchListTile(
-                          title: const Text('Use Time Range'),
-                          value: useTimeRange,
-                          onChanged:
-                              (value) =>
-                                  setStateDialog(() => useTimeRange = value),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildTimeInputs(
-                          context: context,
-                          label:
-                              useTimeRange ? 'Minimum Rest Time' : 'Rest Time',
-                          minutesController: minMinutesController,
-                          secondsController: minSecondsController,
-                        ),
-                        if (useTimeRange) ...[
-                          const SizedBox(height: 24),
-                          _buildTimeInputs(
-                            context: context,
-                            label: 'Maximum Rest Time',
-                            minutesController: maxMinutesController,
-                            secondsController: maxSecondsController,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        final minTotal = _calculateTotalSeconds(
-                          minMinutesController.text,
-                          minSecondsController.text,
-                        );
-                        final maxTotal =
-                            useTimeRange
-                                ? _calculateTotalSeconds(
-                                  maxMinutesController.text,
-                                  maxSecondsController.text,
-                                )
-                                : minTotal;
-                        logic.updateSetRest(
-                          exerciseIndex,
-                          setIndex,
-                          minTotal,
-                          maxTotal,
-                          useTimeRange,
-                        );
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Done'),
-                    ),
-                  ],
-                ),
+        builder:
+            (context, setStateDialog) => AlertDialog(
+          title: Text(
+            'Rest Time for ${logic.selectedExercises[exerciseIndex].exercise.name}',
           ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SwitchListTile(
+                  title: const Text('Use Time Range'),
+                  value: useTimeRange,
+                  onChanged:
+                      (value) =>
+                      setStateDialog(() => useTimeRange = value),
+                ),
+                const SizedBox(height: 16),
+                _buildTimeInputs(
+                  context: context,
+                  label:
+                  useTimeRange ? 'Minimum Rest Time' : 'Rest Time',
+                  minutesController: minMinutesController,
+                  secondsController: minSecondsController,
+                ),
+                if (useTimeRange) ...[
+                  const SizedBox(height: 24),
+                  _buildTimeInputs(
+                    context: context,
+                    label: 'Maximum Rest Time',
+                    minutesController: maxMinutesController,
+                    secondsController: maxSecondsController,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final minTotal = _calculateTotalSeconds(
+                  minMinutesController.text,
+                  minSecondsController.text,
+                );
+                final maxTotal =
+                useTimeRange
+                    ? _calculateTotalSeconds(
+                  maxMinutesController.text,
+                  maxSecondsController.text,
+                )
+                    : minTotal;
+                logic.updateSetRest(
+                  exerciseIndex,
+                  setIndex,
+                  minTotal,
+                  maxTotal,
+                  useTimeRange,
+                );
+                Navigator.pop(context);
+              },
+              child: const Text('Done'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -645,66 +673,66 @@ class _WorkoutCreationScreenState extends State<WorkoutCreationScreen> {
       context: context,
       builder:
           (context) => StatefulBuilder(
-            builder:
-                (context, setStateDialog) => AlertDialog(
-                  title: Text(
-                    'Reps for ${logic.selectedExercises[exerciseIndex].exercise.name}',
-                  ),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SwitchListTile(
-                        title: const Text('Use Rep Range'),
-                        value: useRepRange,
-                        onChanged:
-                            (value) =>
-                                setStateDialog(() => useRepRange = value),
-                      ),
-                      TextField(
-                        controller: minController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: useRepRange ? 'Minimum Reps' : 'Reps',
-                        ),
-                      ),
-                      if (useRepRange) ...[
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: maxController,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            labelText: 'Maximum Reps',
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        final min = int.tryParse(minController.text) ?? 1;
-                        final max =
-                            useRepRange
-                                ? int.tryParse(maxController.text) ?? min
-                                : min;
-                        logic.updateSetReps(
-                          exerciseIndex,
-                          setIndex,
-                          min,
-                          max,
-                          useRepRange,
-                        );
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Done'),
-                    ),
-                  ],
-                ),
+        builder:
+            (context, setStateDialog) => AlertDialog(
+          title: Text(
+            'Reps for ${logic.selectedExercises[exerciseIndex].exercise.name}',
           ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SwitchListTile(
+                title: const Text('Use Rep Range'),
+                value: useRepRange,
+                onChanged:
+                    (value) =>
+                    setStateDialog(() => useRepRange = value),
+              ),
+              TextField(
+                controller: minController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: useRepRange ? 'Minimum Reps' : 'Reps',
+                ),
+              ),
+              if (useRepRange) ...[
+                const SizedBox(height: 16),
+                TextField(
+                  controller: maxController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Maximum Reps',
+                  ),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final min = int.tryParse(minController.text) ?? 1;
+                final max =
+                useRepRange
+                    ? int.tryParse(maxController.text) ?? min
+                    : min;
+                logic.updateSetReps(
+                  exerciseIndex,
+                  setIndex,
+                  min,
+                  max,
+                  useRepRange,
+                );
+                Navigator.pop(context);
+              },
+              child: const Text('Done'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

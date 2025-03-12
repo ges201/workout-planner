@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:hive_flutter/hive_flutter.dart'; // Add this import
+import 'package:hive_flutter/hive_flutter.dart';
+import '../logic/workout_creation_screen_logic.dart';
 import '../models/workout/workout_day.dart';
 import 'workout_creation_screen.dart';
 import '../logic/workout_list_screen_logic.dart';
@@ -15,8 +16,12 @@ class WorkoutListScreen extends StatefulWidget {
 }
 
 class _WorkoutListScreenState extends State<WorkoutListScreen> {
+  final Set<String> _expandedWorkouts = {};
+
   @override
   Widget build(BuildContext context) {
+    final logic = Provider.of<WorkoutListLogic>(context, listen: false);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Workouts'),
@@ -28,18 +33,17 @@ class _WorkoutListScreenState extends State<WorkoutListScreen> {
         child: Column(
           children: [
             Expanded(
-              child: WatchBoxBuilder(
-                box: Hive.box<WorkoutDay>('workouts'),
-                builder: (context, box) {
-                  final List<WorkoutDay> workouts =
-                  box.values.cast<WorkoutDay>().toList();
-                  if (workouts.isNotEmpty) {
-                    return _buildWorkoutList(workouts, context);
-                  } else {
-                    return _buildEmptyState(context);
-                  }
-                },
-              ),
+              child: ValueListenableBuilder<Box<WorkoutDay>>(
+                  valueListenable: logic.getWorkoutsListenable(),
+                  builder: (context, box, _) {
+                    final List<WorkoutDay> workouts =
+                    box.values.cast<WorkoutDay>().toList();
+                    if (workouts.isNotEmpty) {
+                      return _buildWorkoutList(workouts, context);
+                    } else {
+                      return _buildEmptyState(context);
+                    }
+                  }),
             ),
           ],
         ),
@@ -49,8 +53,7 @@ class _WorkoutListScreenState extends State<WorkoutListScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder:
-                  (context) => const WorkoutCreationScreen(
+              builder: (context) => const WorkoutCreationScreen(
                 workoutName: '', // Provide an empty name initially
               ),
             ),
@@ -88,8 +91,23 @@ class _WorkoutListScreenState extends State<WorkoutListScreen> {
         extentRatio: 0.3,
         children: [
           SlidableAction(
-            onPressed:
-                (context) => logic.navigateToEditScreen(context, workout),
+            onPressed: (context) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChangeNotifierProvider.value(
+                    value: WorkoutScreenLogic(
+                      workoutName: workout.name,
+                      existingWorkout: workout,
+                    ),
+                    child: WorkoutCreationScreen(
+                      workoutName: workout.name,
+                      existingWorkout: workout,
+                    ),
+                  ),
+                ),
+              );
+            },
             backgroundColor: Colors.blue.shade100,
             foregroundColor: Colors.blue.shade800,
             icon: Icons.edit_note_rounded,
@@ -99,7 +117,27 @@ class _WorkoutListScreenState extends State<WorkoutListScreen> {
           ),
           const SizedBox(width: 3.5), // Add space between the buttons
           SlidableAction(
-            onPressed: (context) => logic.deleteWorkout(context, workout),
+            onPressed: (context) async {
+              final confirmed = await _showDeleteConfirmation(context, workout.name);
+              if (confirmed) {
+                try {
+                  await logic.deleteWorkout(workout);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Deleted ${workout.name}'),
+                      backgroundColor: Colors.red.shade800,
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
             backgroundColor: Colors.red.shade100,
             foregroundColor: Colors.red.shade800,
             icon: Icons.delete_rounded,
@@ -181,8 +219,6 @@ class _WorkoutListScreenState extends State<WorkoutListScreen> {
     );
   }
 
-  final Set<String> _expandedWorkouts = {};
-
   void _toggleWorkoutExpansion(String workoutKey) {
     setState(() {
       if (_expandedWorkouts.contains(workoutKey)) {
@@ -217,5 +253,26 @@ class _WorkoutListScreenState extends State<WorkoutListScreen> {
         );
       }),
     ];
+  }
+
+  Future<bool> _showDeleteConfirmation(BuildContext context, String name) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Workout'),
+        content: Text('Are you sure you want to delete "$name"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    ) ?? false;
   }
 }

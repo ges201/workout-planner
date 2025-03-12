@@ -1,10 +1,16 @@
-import 'package:hive/hive.dart';
+import 'package:flutter/foundation.dart';
+import 'package:hive_flutter/adapters.dart';
 import '../models/workout/workout_day.dart';
 
 class WorkoutRepository {
   static const _boxName = 'workouts';
 
   Future<Box<WorkoutDay>> get _box async => await Hive.openBox(_boxName);
+
+  // Add this method to provide a listenable for workouts
+  ValueListenable<Box<WorkoutDay>> getWorkoutsListenable() {
+    return Hive.box<WorkoutDay>(_boxName).listenable();
+  }
 
   Future<void> saveWorkout(WorkoutDay workout) async {
     final box = await _box;

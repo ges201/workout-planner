@@ -26,10 +26,10 @@ class WorkoutScreenLogic with ChangeNotifier {
   /// Getter to determine if there are unsaved changes
   bool get hasUnsavedChanges {
     if (existingWorkout == null) {
-      // New workout: Different if name is not empty or exercises are added
+      // New workout: Check against initial empty state
       return workoutName.isNotEmpty || selectedExercises.isNotEmpty;
     } else {
-      // Existing workout: Different if name or exercises have changed
+      // Existing workout: Check for changes from saved version
       final nameChanged = workoutName != existingWorkout!.name;
       final exercisesChanged =
           !_areExercisesEqual(existingWorkout!.exercises, selectedExercises);
@@ -44,7 +44,9 @@ class WorkoutScreenLogic with ChangeNotifier {
   ) {
     if (list1.length != list2.length) return false;
     for (int i = 0; i < list1.length; i++) {
-      if (list1[i].exercise.name != list2[i].exercise.name) return false;
+      if (list1[i].exercise.id != list2[i].exercise.id) {
+        return false; // Use ID for comparison
+      }
       if (list1[i].sets.length != list2[i].sets.length) return false;
       for (int j = 0; j < list1[i].sets.length; j++) {
         final set1 = list1[i].sets[j];
@@ -135,7 +137,8 @@ class WorkoutScreenLogic with ChangeNotifier {
     if (existingWorkout != null) {
       existingWorkout!
         ..name = workoutName
-        ..exercises = List.from(selectedExercises);
+        ..exercises =
+            selectedExercises.map((e) => e.copy()).toList(); // Deep copy
       await repository.saveWorkout(existingWorkout!);
     } else {
       final workout = WorkoutDay(
